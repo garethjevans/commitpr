@@ -54,7 +54,7 @@ Example: README.md,main.go:github/examples/commitpr/main.go`)
 	authorEmail = flag.String("author-email", "", "Email of the author of the commit.")
 	host        = flag.String("host", "github.com", "The GitHub host to connect to")
 	reviewers   = flag.String("reviewers", "", "The reviewers to add to the PR")
-	label       = flag.String("label", "", "The label to add to the PR")
+	labels      = flag.String("labels", "", "Comma-separated list of labels to add to the pull request.")
 )
 
 var client *github.Client
@@ -183,7 +183,6 @@ func createPR() (err error) {
 
 	fmt.Printf("PR created: %s\n", pr.GetHTMLURL())
 
-	// TODO add labels & reviewers at this point
 	if *reviewers != "" {
 		_, _, err = client.PullRequests.RequestReviewers(ctx, *prRepoOwner, *prRepo, *pr.Number, github.ReviewersRequest{
 			TeamReviewers: []string{*reviewers},
@@ -193,11 +192,11 @@ func createPR() (err error) {
 		}
 	}
 
-	if *label != "" {
-		var labels []string
+	if *labels != "" {
+		var allLabels []string
+		allLabels = append(allLabels, strings.Split(*labels, ",")...)
 
-		labels = append(labels, *label)
-		_, _, err = client.Issues.AddLabelsToIssue(ctx, *prRepoOwner, *prRepo, *pr.Number, labels)
+		_, _, err = client.Issues.AddLabelsToIssue(ctx, *prRepoOwner, *prRepo, *pr.Number, allLabels)
 		if err != nil {
 			log.Fatalf("Error adding label: %s\n", err)
 		}
