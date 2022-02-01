@@ -52,6 +52,7 @@ If the file should be in the same location with the same name, you can just put 
 Example: README.md,main.go:github/examples/commitpr/main.go`)
 	authorName  = flag.String("author-name", "", "Name of the author of the commit.")
 	authorEmail = flag.String("author-email", "", "Email of the author of the commit.")
+	host        = flag.String("host", "github.com", "The GitHub host to connect to")
 )
 
 var client *github.Client
@@ -171,6 +172,8 @@ func createPR() (err error) {
 		MaintainerCanModify: github.Bool(true),
 	}
 
+	fmt.Printf("newPR %+v\n", newPR)
+
 	pr, _, err := client.PullRequests.Create(ctx, *prRepoOwner, *prRepo, newPR)
 	if err != nil {
 		return err
@@ -181,6 +184,7 @@ func createPR() (err error) {
 }
 
 func main() {
+	var err error
 	flag.Parse()
 	token := os.Getenv("GITHUB_AUTH_TOKEN")
 	if token == "" {
@@ -191,7 +195,14 @@ func main() {
 	}
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
-	client = github.NewClient(tc)
+	if *host == "github.com" {
+		client = github.NewClient(tc)
+	} else {
+		client, err = github.NewEnterpriseClient(fmt.Sprintf("https://%s/api/v3/", *host), fmt.Sprintf("https://%s/api/uploads/", *host), tc)
+		if err != nil {
+			log.Fatalf("Unable to connect to GH Enterprise %s: %s\n", *host, err)
+		}
+	}
 
 	ref, err := getRef()
 	if err != nil {
