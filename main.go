@@ -234,6 +234,11 @@ func main() {
 	}
 
 	if err := createPR(); err != nil {
-		log.Fatalf("Error while creating the pull request: %s", err)
+		if strings.Contains("A pull request already exists for", err.Error()) {
+			fmt.Println("Pull request already exists.")
+		} else {
+			log.Fatalf("Unable to create pull request: %s\n", err)
+		}
 	}
+
 }
