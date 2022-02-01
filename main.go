@@ -53,6 +53,7 @@ Example: README.md,main.go:github/examples/commitpr/main.go`)
 	authorName  = flag.String("author-name", "", "Name of the author of the commit.")
 	authorEmail = flag.String("author-email", "", "Email of the author of the commit.")
 	host        = flag.String("host", "github.com", "The GitHub host to connect to")
+	reviewers   = flag.String("reviewers", "", "The reviewers to add to the PR")
 )
 
 var client *github.Client
@@ -180,6 +181,17 @@ func createPR() (err error) {
 	}
 
 	fmt.Printf("PR created: %s\n", pr.GetHTMLURL())
+
+	// TODO add labels & reviewers at this point
+	if *reviewers != "" {
+		_, _, err = client.PullRequests.RequestReviewers(ctx, *prRepoOwner, *prRepo, *pr.Number, github.ReviewersRequest{
+			TeamReviewers: []string{*reviewers},
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
