@@ -54,6 +54,7 @@ Example: README.md,main.go:github/examples/commitpr/main.go`)
 	authorEmail = flag.String("author-email", "", "Email of the author of the commit.")
 	host        = flag.String("host", "github.com", "The GitHub host to connect to")
 	reviewers   = flag.String("reviewers", "", "The reviewers to add to the PR")
+	label       = flag.String("label", "", "The label to add to the PR")
 )
 
 var client *github.Client
@@ -189,6 +190,16 @@ func createPR() (err error) {
 		})
 		if err != nil {
 			return err
+		}
+	}
+
+	if *label != "" {
+		var labels []string
+
+		labels = append(labels, *label)
+		_, _, err = client.Issues.AddLabelsToIssue(ctx, *prRepoOwner, *prRepo, *pr.Number, labels)
+		if err != nil {
+			log.Fatalf("Error adding label: %s\n", err)
 		}
 	}
 
