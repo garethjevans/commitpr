@@ -184,12 +184,14 @@ func createPR() (err error) {
 	fmt.Printf("PR created: %s\n", pr.GetHTMLURL())
 
 	if *reviewers != "" {
+		fmt.Printf("Adding reviewer(s): %s\n", *reviewers)
 		_, _, err = client.PullRequests.RequestReviewers(ctx, *prRepoOwner, *prRepo, *pr.Number, github.ReviewersRequest{
 			TeamReviewers: []string{*reviewers},
 		})
 		if err != nil {
 			return err
 		}
+		fmt.Printf("Added reviewer(s)\n")
 	}
 
 	if *labels != "" {
