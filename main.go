@@ -185,9 +185,10 @@ func createPR() (err error) {
 
 	if *reviewers != "" {
 		fmt.Printf("Adding reviewer(s): %s\n", *reviewers)
-		_, _, err = client.PullRequests.RequestReviewers(ctx, *prRepoOwner, *prRepo, *pr.Number, github.ReviewersRequest{
-			TeamReviewers: []string{*reviewers},
-		})
+
+		var AllTeamReviewers []string
+		AllTeamReviewers = append(AllTeamReviewers, strings.Split(*reviewers, ",")...)
+		_, _, err = client.PullRequests.RequestReviewers(ctx, *prRepoOwner, *prRepo, *pr.Number, github.ReviewersRequest{TeamReviewers: AllTeamReviewers})
 		if err != nil {
 			return err
 		}
