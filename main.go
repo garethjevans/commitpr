@@ -186,13 +186,56 @@ func createPR() (err error) {
 	if *reviewers != "" {
 		fmt.Printf("Adding reviewer(s): %s\n", *reviewers)
 
-		var AllTeamReviewers []string
-		AllTeamReviewers = append(AllTeamReviewers, strings.Split(*reviewers, ",")...)
-		_, _, err = client.PullRequests.RequestReviewers(ctx, *prRepoOwner, *prRepo, *pr.Number, github.ReviewersRequest{TeamReviewers: AllTeamReviewers})
+		var allTeamReviewers []string
+		var allReviewers []string
+		var finalReviewers []string
+
+		allReviewers = append(allReviewers, strings.Split(*reviewers, ",")...)
+
+		// a PR cannot be reviewed by the author
+		currentlyLoggedInUser, _, err := client.Users.Get(ctx, "")
 		if err != nil {
-			return err
+			log.Fatalf("Unable to get the currently logged in user: %s", err)
 		}
-		fmt.Printf("Added reviewer(s)\n")
+		for _, reviewer := range allReviewers {
+			if strings.Contains(reviewer, "/") {
+				allTeamReviewers = append(allTeamReviewers, reviewer)
+			} else {
+				if reviewer != *currentlyLoggedInUser.Login {
+					finalReviewers = append(finalReviewers, reviewer)
+				}
+			}
+		}
+
+		for _, team := range allTeamReviewers {
+			// get team members from GH
+			parts := strings.Split(team, "/")
+
+			fmt.Printf("Listing team members for : %s/%s", parts[0], parts[1])
+			members, _, err := client.Teams.ListTeamMembersBySlug(ctx, parts[0], parts[1], &github.TeamListTeamMembersOptions{})
+			if err != nil {
+				log.Fatalf("Error retrieving team members: %s", err)
+			}
+
+			for _, member := range members {
+				// append each member to finalReviewer
+				if *member.Login != *currentlyLoggedInUser.Login {
+					finalReviewers = append(finalReviewers, *member.Login)
+				}
+			}
+		}
+
+		fmt.Printf("The final reviewers: %s", finalReviewers)
+		if len(finalReviewers) > 0 {
+			_, _, err = client.PullRequests.RequestReviewers(ctx, *prRepoOwner, *prRepo, *pr.Number, github.ReviewersRequest{
+				Reviewers: finalReviewers,
+			})
+
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Added reviewer(s)\n")
+		}
 	}
 
 	if *labels != "" {
