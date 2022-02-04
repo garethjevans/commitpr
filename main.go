@@ -187,10 +187,42 @@ func createPR() (err error) {
 		fmt.Printf("Adding reviewer(s): %s\n", *reviewers)
 
 		var allTeamReviewers []string
-		allTeamReviewers = append(allTeamReviewers, strings.Split(*reviewers, ",")...)
+		var allReviewers []string
+		var finalReviewers []string
+
+		var ts *github.TeamsService
+		var teamOptions *github.TeamListTeamMembersOptions
+
+		allReviewers = append(allReviewers, strings.Split(*reviewers, ",")...)
+
+		for _, reviewer := range allReviewers {
+			if strings.Contains(reviewer, "/") {
+				allTeamReviewers = append(allTeamReviewers, reviewer)
+			} else {
+				finalReviewers = append(finalReviewers, reviewer)
+			}
+		}
+
+		fmt.Printf("The final reviewers: %s", finalReviewers)
+
+		for _, team := range allTeamReviewers {
+			// get team members from GH
+
+			members, _, err := ts.ListTeamMembersBySlug(ctx, "cki", team, teamOptions)
+			if err != nil {
+				log.Fatalf("Error retrieving team members: %s", err)
+			}
+
+			fmt.Println(members)
+
+			for _, member := range members {
+				// append each member to finalReviewer
+				finalReviewers = append(finalReviewers, *member.Name)
+			}
+		}
+
 		_, _, err = client.PullRequests.RequestReviewers(ctx, *prRepoOwner, *prRepo, *pr.Number, github.ReviewersRequest{
-			TeamReviewers: allTeamReviewers,
-			Reviewers:     allTeamReviewers,
+			Reviewers: finalReviewers,
 		})
 		if err != nil {
 			return err
