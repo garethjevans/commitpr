@@ -19,7 +19,7 @@ run: build
 			  -author-name "Dummy Commit" \
 			  -author-email "dummy@sap.com" \
 			  -labels "semver:patch,type:dependency" \
-			  -reviewers "cki/engineer-better,C5339291" \
+			  -reviewers "cki/engineer-better" \
 			  -base-branch main \
 			  -merge-branch main \
 			  -pr-title "a test pr"
