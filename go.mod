@@ -1,10 +1,10 @@
 module github.com/garethjevans/commitpr
 
-go 1.17
+go 1.26.0
 
 require (
 	github.com/google/go-github/v42 v42.0.0
-	golang.org/x/oauth2 v0.21.0
+	golang.org/x/oauth2 v0.37.0
 )
 
 require (
